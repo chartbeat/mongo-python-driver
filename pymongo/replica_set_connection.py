@@ -106,7 +106,19 @@ class Monitor(threading.Thread):
                 break
             except:
                 pass
-            time.sleep(self.interval)
+            # On interpreter shutdown, time becomes undefined while thread
+            # keeps running triggering the error below:
+            #
+            #Exception in thread ReplicaSetMonitorThread (most likely raised during interpreter shutdown):
+            #Traceback (most recent call last):
+            # File "/usr/lib/python2.6/threading.py", line 532, in __bootstrap_inner
+            # File "/usr/local/lib/python2.6/dist-packages/pymongo/replica_set_connection.py", line 109, in run
+            #<type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'sleep'
+            #
+            # Hacky, but check time before accessing it. Under mormal operation
+            # it is going to be defined since it is imported.
+            if time:
+                time.sleep(self.interval)
 
 
 class ReplicaSetConnection(common.BaseObject):

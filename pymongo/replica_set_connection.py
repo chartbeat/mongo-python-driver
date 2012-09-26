@@ -126,7 +126,9 @@ class ReplicaSetConnection(common.BaseObject):
     """
 
     def __init__(self, hosts_or_uri=None, max_pool_size=10,
-                 document_class=dict, tz_aware=False, **kwargs):
+                 document_class=dict, tz_aware=False,
+                 min_number_of_nodes=1,
+                 **kwargs):
         """Create a new connection to a MongoDB replica set.
 
         The resultant connection object has connection-pooling built
@@ -164,6 +166,9 @@ class ReplicaSetConnection(common.BaseObject):
             The driver will verify that each host it connects to is a member of
             this replica set. Can be passed as a keyword argument or as a
             MongoDB URI option.
+          - `min_number_of_nodes`: (int) The minimum number of nodes to be
+            expected in the replicaset, for the replicaset to be primed
+            properly. https://chartbeat.fogbugz.com/default.asp?3466
 
           Other optional parameters can be passed as keyword arguments:
 
@@ -195,6 +200,7 @@ class ReplicaSetConnection(common.BaseObject):
         """
         self.__max_pool_size = max_pool_size
         self.__document_class = document_class
+        self.__min_number_of_nodes = min_number_of_nodes
         self.__tz_aware = tz_aware
         self.__opts = {}
         self.__seeds = set()
@@ -535,7 +541,7 @@ class ReplicaSetConnection(common.BaseObject):
                 if mongo:
                     mongo['pool'].discard_socket()
                 errors.append("%s:%d: %s" % (node[0], node[1], str(why)))
-            if hosts:
+            if hosts and len(hosts) >= self.__min_number_of_nodes:
                 self.__hosts = hosts
                 break
         else:

@@ -832,7 +832,7 @@ class ReplicaSetConnection(common.BaseObject):
                                                                    **kwargs)
             except AutoReconnect, why:
                 self.disconnect()
-                errors.append(why)
+                errors.append(str(why))
         raise AutoReconnect(', '.join(errors))
 
     def __cmp__(self, other):
